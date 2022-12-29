@@ -16,41 +16,54 @@ library(knitr)
 library(reshape2)
 library(mapdata)
 
-#------------------read in data--------------
+#------------------read in data, clean, and check--------------
 # read in 
 world <- read.csv("world_data.csv")
 # convert to local data frame
 world <- tibble::as_tibble(world)
-# merge map data set from R with my data set
-mapdata_base <- map_data("world")
-countries_mapdata <- unique(mapdata_base$region)
-world$Country[world$Country == "United States"] <- "USA"
-colnames(mapdata)[5] = "Country" 
-mapdata <- left_join(mapdata, world, by="Country")
-unique(mapdata$Country)
-
-mapdata %>%
-  select(Country, Happiness.score.x) %>%
-  filter(Country=="USA")
-
-mapdata_base %>%
-  select(region, lat, long) %>%
-  filter(region=="USA")
+# create map data frame from base r
+map <- map_data("world") 
+#change column names
+colnames(world) <- c("rank", "country", "happiness.score", "whisker.high", "whisker.low", "dystopia", "gdp", "social.support", "life.exp", "free.choices", "generosity", "corruption")
+colnames(map)[5] <- "country"
+#check # of countries
+length(unique(map$country)) #252 countries 
+length(unique(world$country)) #146 countries
+sort(unique(map$country)) == sort(unique(world$country))
+#change united states to USA to match other data set
+world <-world %>% 
+  mutate(country=replace(country, country=="United States", "USA")) 
+# merge map with country
+map_data <- left_join(map, world, by="country")
+map_data %>% #checking USA
+  select(country, happiness.score) %>%
+  filter(country=="USA")
+# looking for inconsistencies
+map_data %>%
+  select(country, happiness.score) %>%
+  filter(is.na(happiness.score)) %>%
+  distinct(., country) #132 countries
+#missing countries. idk what to do about these
+map_data %>% 
+  select(country, happiness.score) %>%
+  filter(country %in% c("Madagascar", "Liberia", "Sudan", "South Sudan", "Greenland", "Lybia", "Mauritania", "Gambia", "Botswana", "eSwatini", "Chad", "Niger", "Chad", "Central African Republic", "Angola", "Somalia")) %>%
+  distinct(., country, happiness.score)
 
 #------------------viz--------------
-#basic
-map1 <- ggplot(mapdata, aes(x=long, y=lat, group=group)) +
-  geom_polygon(aes(fill=Happiness.score), color="black", size=0)
+#basic chart
+ggplot(map_data, aes(x=long, y=lat, group=group)) +
+  geom_polygon(aes(fill=happiness.score), size=0)
 #modified for style
-map2 <- map1 + scale_fill_gradient(name="Happiness Score", low="blue", high="red", na.value="gray") +
+ggplot(map_data, aes(x=long, y=lat, group=group)) +
+  geom_polygon(aes(fill=happiness.score), size=0) +
+  scale_fill_gradient(name="Happiness Score", low="red", high="darkgreen", na.value="gray") +
   theme(
     axis.text.x=element_blank(),
     axis.text.y=element_blank(),
     axis.ticks=element_blank(),
     axis.title.x=element_blank(),
     axis.title.y=element_blank(),
-    rect=element_blank()
-  )
+    rect=element_blank())
 
 
 
