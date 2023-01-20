@@ -86,6 +86,60 @@ ggplot(box.plot, aes(x=factor, y=value)) +
   geom_boxplot(alpha=.5) +
   scale_fill_viridis(discrete=T, alpha=0.6) 
 
+#highest and lowest GDP 
+
+gdp.plot.h <- world %>%
+  select(country, regional.indicator, gdp.per.cap) %>%
+  arrange(desc(gdp.per.cap)) %>%
+  slice(1:10)
+
+gdp.plot.l <- world %>%
+  select(country, regional.indicator, gdp.per.cap) %>%
+  arrange(gdp.per.cap) %>%
+  slice(1:10)
+
+gdp.plot <- gdp.plot.h %>% bind_rows(.,gdp.plot.l)
+
+gdp.plot <- gdp.plot %>% 
+  arrange(gdp.per.cap) %>%
+  select(country, gdp.per.cap)
+
+gdp.plot$country <- factor(gdp.plot$country, levels=gdp.plot$country[order(gdp.plot$gdp.per.cap)])
+
+ggplot(gdp.plot, aes(gdp.plot$country, y=gdp.per.cap)) +
+  geom_point() +
+  geom_segment(aes(x=country, xend=country, y=0, yend=gdp.per.cap))
+
+ggplot(gdp.plot, aes(country, y=gdp.per.cap)) +
+  geom_point() +
+  geom_segment(aes(x=country, xend=country, y=0, yend=gdp.per.cap)) +
+  coord_flip()
+
+#highest and lowest life exp
+
+life.plot.h <- world %>%
+  select(country, regional.indicator, life.exp) %>%
+  arrange(desc(life.exp)) %>%
+  slice(1:10)
+
+life.plot.l <- world %>%
+  select(country, regional.indicator, life.exp) %>%
+  arrange(life.exp) %>%
+  slice(1:10)
+
+life.plot <- life.plot.h %>% bind_rows(.,life.plot.l)
+
+life.plot <- life.plot %>% 
+  arrange(life.exp) %>%
+  select(country, life.exp)
+
+life.plot$country <- factor(life.plot$country, levels=life.plot$country[order(life.plot$life.exp)])
+
+ggplot(life.plot, aes(life.plot$country, y=life.exp)) +
+  geom_point() +
+  geom_segment(aes(x=country, xend=country, y=0, yend=life.exp)) +
+  coord_flip()
+
 #------------------viz--------------
 #basic chart
 ggplot(map_data, aes(x=long, y=lat, group=group)) +
